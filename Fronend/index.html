@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Idea Validator</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;color:#fff}
+  .syne{font-family:'Syne',sans-serif}
+
+  /* FORM */
+  .form-input{
+    width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px;padding:12px 16px;color:#fff;font-family:'DM Sans',sans-serif;
+    font-size:14px;outline:none;transition:border-color 0.2s;resize:none
+  }
+  .form-input:focus{border-color:rgba(255,255,255,0.3)}
+  .form-input::placeholder{color:rgba(255,255,255,0.2)}
+  .form-label{font-size:12px;color:rgba(255,255,255,0.4);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;display:block}
+  .submit-btn{
+    width:100%;background:rgba(255,255,255,0.9);color:#0a0a0a;
+    border:none;border-radius:12px;padding:14px;font-family:'Syne',sans-serif;
+    font-size:15px;font-weight:700;cursor:pointer;transition:background 0.2s,transform 0.1s;
+    letter-spacing:0.02em
+  }
+  .submit-btn:hover{background:#fff}
+  .submit-btn:active{transform:scale(0.98)}
+  .submit-btn:disabled{background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.4);cursor:not-allowed}
+  .skill-slider{
+    -webkit-appearance:none;width:100%;height:4px;border-radius:99px;
+    background:rgba(255,255,255,0.1);outline:none
+  }
+  .skill-slider::-webkit-slider-thumb{
+    -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:#fff;cursor:pointer
+  }
+
+  /* SKELETON */
+  @keyframes shimmer{
+    0%{background-position:-400px 0}
+    100%{background-position:400px 0}
+  }
+  .skeleton{
+    background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.09) 50%,rgba(255,255,255,0.04) 75%);
+    background-size:800px 100%;
+    animation:shimmer 1.6s infinite;
+    border-radius:8px
+  }
+
+  /* CARDS */
+  .card-el{position:absolute;width:100%;height:100%;border-radius:24px;overflow:hidden;cursor:grab;user-select:none;touch-action:none}
+  .card-el:active{cursor:grabbing}
+  .feedback{position:absolute;inset:0;border-radius:24px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:0.08em;opacity:0;pointer-events:none;z-index:10}
+  .feedback.like{background:rgba(29,158,117,0.4);color:#5DCAA5;border:3px solid #1D9E75}
+  .feedback.nope{background:rgba(226,75,74,0.35);color:#F09595;border:3px solid #E24B4A}
+
+  /* SAVED */
+  .saved-card{transition:transform 0.15s,box-shadow 0.15s;cursor:pointer}
+  .saved-card:hover{transform:translateY(-2px)}
+
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(6px)}
+
+  /* SCROLLBAR */
+  .scrollbar-hide::-webkit-scrollbar{display:none}
+  .scrollbar-hide{-ms-overflow-style:none;scrollbar-width:none}
+
+  /* TRANSITIONS */
+  .fade-out{animation:fadeOut 0.4s forwards}
+  .fade-in{animation:fadeIn 0.4s forwards}
+  @keyframes fadeOut{to{opacity:0;transform:translateY(-16px)}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- ===== FORM SCREEN ===== -->
+<div id="form-screen" class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+    <div class="mb-10">
+      <p class="syne text-xs tracking-widest text-white/30 uppercase mb-3">Idea Validator</p>
+      <h1 class="syne text-3xl font-bold text-white leading-tight mb-2">What's your idea?</h1>
+      <p class="text-white/40 text-sm">Fill in your details and we'll generate 5 tailored project ideas — with local business data if relevant.</p>
+    </div>
+
+    <div class="space-y-5">
+      <div>
+        <label class="form-label">Your niche</label>
+        <select id="niche-select" class="form-input" onchange="handleNicheChange(this.value)" style="cursor:pointer">
+          <option value="" disabled selected>Select a niche...</option>
+          <option value="Food & Restaurant">Food & Restaurant</option>
+          <option value="Fitness & Wellness">Fitness & Wellness</option>
+          <option value="Healthcare">Healthcare</option>
+          <option value="Education">Education</option>
+          <option value="Legal">Legal</option>
+          <option value="Real Estate">Real Estate</option>
+          <option value="Retail & E-commerce">Retail & E-commerce</option>
+          <option value="Beauty & Personal Care">Beauty & Personal Care</option>
+          <option value="Automotive">Automotive</option>
+          <option value="Finance & Accounting">Finance & Accounting</option>
+          <option value="Travel & Hospitality">Travel & Hospitality</option>
+          <option value="Technology & SaaS">Technology & SaaS</option>
+          <option value="Other">Other (specify)</option>
+        </select>
+        <input id="niche-other" type="text" class="form-input hidden" placeholder="e.g. Agriculture, Logistics, Pet Care..." maxlength="100" style="margin-top:8px">
+      </div>
+
+      <div>
+        <label class="form-label">Idea details</label>
+        <textarea id="details" class="form-input" rows="3" placeholder="Describe your idea in detail — what problem it solves, who it helps..."></textarea>
+      </div>
+
+      <div>
+        <label class="form-label">
+          Skill level — <span id="skill-val" class="text-white/70">5</span>/10
+        </label>
+        <input id="skill" type="range" min="1" max="10" value="5" class="skill-slider" oninput="document.getElementById('skill-val').textContent=this.value">
+        <div class="flex justify-between mt-1">
+          <span class="text-xs text-white/20">Beginner</span>
+          <span class="text-xs text-white/20">Expert</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="form-label">Skill background</label>
+        <textarea id="skill_details" class="form-input" rows="2" placeholder="Describe your relevant experience or background..."></textarea>
+      </div>
+
+      <button id="submit-btn" class="submit-btn" onclick="handleSubmit()">
+        Generate ideas
+      </button>
+
+      <p id="form-error" class="text-red-400 text-xs text-center hidden"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SKELETON SCREEN ===== -->
+<div id="skeleton-screen" class="hidden min-h-screen p-4 lg:p-8">
+  <div class="flex flex-col lg:flex-row gap-6">
+    <!-- skeleton card -->
+    <div class="flex flex-col items-center flex-shrink-0">
+      <div class="skeleton w-24 h-3 mb-6 rounded-full"></div>
+      <div class="relative w-[300px] h-[480px] mb-6">
+        <!-- stacked skeleton cards -->
+        <div style="position:absolute;width:100%;height:100%;border-radius:24px;background:rgba(255,255,255,0.04);transform:translateY(24px) rotate(4.5deg) scale(0.91);border:1px solid rgba(255,255,255,0.06)"></div>
+        <div style="position:absolute;width:100%;height:100%;border-radius:24px;background:rgba(255,255,255,0.055);transform:translateY(16px) rotate(3deg) scale(0.94);border:1px solid rgba(255,255,255,0.07)"></div>
+        <div style="position:absolute;width:100%;height:100%;border-radius:24px;background:rgba(255,255,255,0.07);transform:translateY(8px) rotate(1.5deg) scale(0.97);border:1px solid rgba(255,255,255,0.08)"></div>
+        <!-- top card with shimmer content -->
+        <div style="position:absolute;width:100%;height:100%;border-radius:24px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);padding:20px;display:flex;flex-direction:column;justify-content:space-between">
+          <div style="display:flex;justify-content:space-between">
+            <div class="skeleton" style="width:110px;height:28px;border-radius:99px"></div>
+            <div class="skeleton" style="width:64px;height:28px;border-radius:99px"></div>
+          </div>
+          <div class="skeleton" style="width:80px;height:80px;border-radius:12px;align-self:center"></div>
+          <div>
+            <div class="skeleton" style="width:70%;height:22px;margin-bottom:10px"></div>
+            <div class="skeleton" style="width:100%;height:13px;margin-bottom:6px"></div>
+            <div class="skeleton" style="width:85%;height:13px;margin-bottom:14px"></div>
+            <div style="display:flex;gap:6px">
+              <div class="skeleton" style="width:80px;height:22px;border-radius:99px"></div>
+              <div class="skeleton" style="width:70px;height:22px;border-radius:99px"></div>
+              <div class="skeleton" style="width:30px;height:22px;border-radius:99px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="skeleton w-40 h-3 rounded-full"></div>
+    </div>
+
+    <!-- skeleton saved list -->
+    <div class="flex-1">
+      <div class="flex items-center justify-between mb-4">
+        <div class="skeleton w-28 h-3 rounded-full"></div>
+        <div class="skeleton w-16 h-6 rounded-full"></div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:14px">
+          <div class="skeleton w-20 h-3 rounded-full mb-3"></div>
+          <div class="skeleton w-3/4 h-4 rounded mb-2"></div>
+          <div class="skeleton w-full h-3 rounded mb-1"></div>
+          <div class="skeleton w-5/6 h-3 rounded"></div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:14px">
+          <div class="skeleton w-20 h-3 rounded-full mb-3"></div>
+          <div class="skeleton w-3/4 h-4 rounded mb-2"></div>
+          <div class="skeleton w-full h-3 rounded mb-1"></div>
+          <div class="skeleton w-5/6 h-3 rounded"></div>
+        </div>
+      </div>
+      <p class="syne text-xs tracking-widest text-white/20 uppercase text-center mt-8" id="skeleton-msg">Analyzing your idea...</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CARD SCREEN ===== -->
+<div id="card-screen" class="hidden min-h-screen p-4 lg:p-8">
+  <div class="flex flex-col lg:flex-row gap-6">
+
+    <!-- LEFT: swipe -->
+    <div class="flex flex-col items-center flex-shrink-0">
+      <div class="flex items-center gap-3 mb-4">
+        <button onclick="backToForm()" class="text-white/30 hover:text-white/60 transition text-xs flex items-center gap-1">
+          <i class="ti ti-arrow-left" style="font-size:14px"></i> New idea
+        </button>
+        <span class="text-white/10">|</span>
+        <p class="syne text-xs tracking-widest text-white/30 uppercase" id="counter">1 of 5</p>
+      </div>
+
+      <div class="relative w-[300px] h-[480px] mb-6" id="scene">
+        <div id="deck-empty" style="display:none" class="flex flex-col items-center justify-center h-full gap-4">
+          <i class="ti ti-stack-2" style="font-size:48px;color:rgba(255,255,255,0.1)"></i>
+          <p class="syne text-white/40 font-bold text-lg">All reviewed</p>
+          <span class="text-white/20 text-sm">Check your saved ideas →</span>
+          <button onclick="backToForm()" class="mt-2 px-5 py-2 rounded-full border border-white/15 text-white/50 text-sm hover:bg-white/10 transition">Try new idea</button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-8">
+        <div class="flex items-center gap-2 text-xs text-white/30 uppercase tracking-widest">
+          <div class="w-9 h-9 rounded-full flex items-center justify-center border border-red-500/30 bg-red-500/10 text-red-400">
+            <i class="ti ti-x" style="font-size:16px"></i>
+          </div>
+          skip
+        </div>
+        <div class="flex items-center gap-2 text-xs text-white/30 uppercase tracking-widest">
+          <div class="w-9 h-9 rounded-full flex items-center justify-center border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+            <i class="ti ti-heart" style="font-size:16px"></i>
+          </div>
+          save
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: saved -->
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center justify-between mb-4">
+        <p class="syne text-white/70 font-bold text-sm uppercase tracking-widest">Saved ideas</p>
+        <span class="text-xs text-white/30 bg-white/5 border border-white/10 rounded-full px-3 py-1" id="saved-count">0 saved</span>
+      </div>
+
+      <div id="saved-empty" class="flex flex-col items-center justify-center h-48 border border-white/5 rounded-2xl">
+        <i class="ti ti-heart" style="font-size:36px;color:rgba(255,255,255,0.08);margin-bottom:12px"></i>
+        <p class="text-white/20 text-sm">Swipe right on ideas you like</p>
+      </div>
+
+      <div id="saved-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 scrollbar-hide" style="max-height:500px;overflow-y:auto"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL ===== -->
+<div id="modal" class="modal-bg hidden" onclick="closeModal(event)">
+  <div id="modal-box" class="bg-[#111] border border-white/10 rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto scrollbar-hide">
+    <div class="p-6">
+      <div class="flex items-start justify-between mb-5">
+        <div class="flex-1 pr-4">
+          <p class="syne text-white font-bold text-xl leading-tight" id="modal-name"></p>
+          <p class="text-white/40 text-xs mt-1" id="modal-client"></p>
+        </div>
+        <button onclick="document.getElementById('modal').classList.add('hidden')" class="text-white/30 hover:text-white/70 transition">
+          <i class="ti ti-x" style="font-size:20px"></i>
+        </button>
+      </div>
+
+      <div id="modal-badge" class="mb-4"></div>
+
+      <div class="mb-5">
+        <p style="font-size:11px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Description</p>
+        <p class="text-white/70 text-sm leading-relaxed" id="modal-desc"></p>
+      </div>
+
+      <div id="modal-biz"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PALETTES=[
+  {bg:'#1a0533',accent:'#7F77DD'},
+  {bg:'#0d1f2d',accent:'#378ADD'},
+  {bg:'#1a0d0d',accent:'#D85A30'},
+  {bg:'#0a1a15',accent:'#1D9E75'},
+  {bg:'#1a0d1a',accent:'#D4537E'},
+];
+
+const SKELETON_MSGS=[
+  'Analyzing your idea...',
+  'Evaluating local potential...',
+  'Scanning nearby businesses...',
+  'Generating your projects...',
+  'Almost ready...'
+];
+
+let current=0,saved=[],IDEAS=[];
+let skeletonInterval=null;
+
+function showScreen(name){
+  ['form-screen','skeleton-screen','card-screen'].forEach(id=>{
+    document.getElementById(id).classList.add('hidden');
+  });
+  document.getElementById(name).classList.remove('hidden');
+}
+
+function showError(msg){
+  const el=document.getElementById('form-error');
+  el.textContent=msg;
+  el.classList.remove('hidden');
+}
+
+function hideError(){
+  document.getElementById('form-error').classList.add('hidden');
+}
+
+async function handleSubmit(){
+  hideError();
+  const niche = getNiche();
+  if (!niche || niche.length < 2) { showError('Please select or enter a niche.'); return }
+  const details=document.getElementById('details').value.trim();
+  const skill=parseInt(document.getElementById('skill').value);
+  const skill_details=document.getElementById('skill_details').value.trim();
+
+  if(niche.length<2){showError('Niche must be at least 2 characters.');return}
+  if(details.length<20){showError('Idea details must be at least 20 characters.');return}
+  if(skill_details.length<20){showError('Skill background must be at least 20 characters.');return}
+
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true;
+  btn.textContent='Generating...';
+
+  showScreen('skeleton-screen');
+  let msgIdx=0;
+  skeletonInterval=setInterval(()=>{
+    msgIdx=(msgIdx+1)%SKELETON_MSGS.length;
+    document.getElementById('skeleton-msg').textContent=SKELETON_MSGS[msgIdx];
+  },2500);
+
+  try{
+    const res=await fetch('http://127.0.0.1:8000/api/v1/generate',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({niche,details,skill,skill_details})
+    });
+
+    if(!res.ok) throw new Error(`API error ${res.status}`);
+    const data=await res.json();
+    IDEAS=data.Data.ideas;
+    console.log("TEST");
+    console.log(data);
+    clearInterval(skeletonInterval);
+    buildCards();
+    showScreen('card-screen');
+  }catch(err){
+    clearInterval(skeletonInterval);
+    showScreen('form-screen');
+    btn.disabled=false;
+    btn.textContent='Generate ideas';
+    showError('Something went wrong. Make sure your backend is running.');
+  }
+}
+
+function handleNicheChange(val) {
+  const other = document.getElementById('niche-other')
+  if (val === 'Other') {
+    other.classList.remove('hidden')
+    other.focus()
+  } else {
+    other.classList.add('hidden')
+    other.value = ''
+  }
+}
+
+function getNiche() {
+  const select = document.getElementById('niche-select')
+  const other = document.getElementById('niche-other')
+  if (select.value === 'Other') return other.value.trim()
+  return select.value
+}
+
+function buildCards(){
+  const scene=document.getElementById('scene');
+  scene.querySelectorAll('.card-el').forEach(c=>c.remove());
+  current=IDEAS.length-1;
+  saved=[];
+  document.getElementById('saved-grid').innerHTML='';
+  document.getElementById('saved-empty').style.display='flex';
+  document.getElementById('saved-count').textContent='0 saved';
+  document.getElementById('deck-empty').style.display='none';
+
+  IDEAS.forEach((idea,i)=>{
+    const pal=PALETTES[i%PALETTES.length];
+    const card=document.createElement('div');
+    card.className='card-el';
+    const fromTop=IDEAS.length-1-i;
+    card.style.cssText=`z-index:${i+1};transform:translateY(${fromTop*8}px) rotate(${fromTop*1.5}deg) scale(${1-fromTop*0.03})`;
+
+    const bizHTML = idea.is_local && idea.local_businesses ? `
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:10px">
+      ${idea.local_businesses.slice(0, 3).map(b => `
+        <a href="${b.url || '#'}" target="_blank" style="text-decoration:none">
+          <span style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:99px;padding:3px 10px;font-size:10px;color:rgba(255,255,255,0.7);white-space:nowrap;max-width:110px;overflow:hidden;text-overflow:ellipsis;cursor:pointer;display:block">${b.name || b}</span>
+        </a>`).join('')}
+      ${idea.local_businesses.length > 3 ? `<span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:99px;padding:3px 10px;font-size:10px;color:rgba(255,255,255,0.35)">+${idea.local_businesses.length - 3}</span>` : ''}
+    </div>` : '';
+
+    card.innerHTML=`
+      <div style="position:absolute;inset:0;background:${pal.bg}"></div>
+      <div style="position:absolute;inset:0;background:linear-gradient(160deg,${pal.accent}22 0%,transparent 50%,rgba(0,0,0,0.6) 100%)"></div>
+      <div class="feedback like">SAVE</div>
+      <div class="feedback nope">SKIP</div>
+      <div style="position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:space-between;padding:18px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <span style="background:rgba(255,255,255,0.18);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.25);border-radius:99px;padding:5px 12px;font-size:11px;font-weight:500;color:#fff;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${idea.potential_client}</span>
+          ${idea.is_local
+            ?`<span style="background:rgba(29,158,117,0.25);border:1px solid rgba(29,158,117,0.5);border-radius:99px;padding:5px 10px;font-size:10px;color:#5DCAA5;white-space:nowrap">📍 Local</span>`
+            :`<span style="background:rgba(55,138,221,0.2);border:1px solid rgba(55,138,221,0.4);border-radius:99px;padding:5px 10px;font-size:10px;color:#85B7EB;white-space:nowrap">🌐 Remote</span>`
+          }
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:64px;font-weight:800;color:rgba(255,255,255,0.07);line-height:1;text-align:center">${String(i+1).padStart(2,'0')}</div>
+        <div>
+          <p style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:6px">${idea.name}</p>
+          <p style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.5">${idea.description.slice(0,80)}...</p>
+          ${bizHTML}
+        </div>
+      </div>`;
+
+    scene.appendChild(card);
+    addDrag(card,idea,i);
+  });
+  updateCounter();
+}
+
+function addDrag(card,idea,idx){
+  let startX,startY,dragging=false;
+  function onStart(e){if(idx!==current)return;dragging=true;const p=e.touches?e.touches[0]:e;startX=p.clientX;startY=p.clientY;card.style.transition='none'}
+  function onMove(e){
+    if(!dragging)return;e.preventDefault();
+    const p=e.touches?e.touches[0]:e;
+    const dx=p.clientX-startX,dy=p.clientY-startY;
+    card.style.transform=`translate(${dx}px,${dy}px) rotate(${dx*0.12}deg)`;
+    const[like,nope]=card.querySelectorAll('.feedback');
+    const r=Math.min(Math.abs(dx)/80,1);
+    if(dx>20){like.style.opacity=r;nope.style.opacity=0}
+    else if(dx<-20){nope.style.opacity=r;like.style.opacity=0}
+    else{like.style.opacity=0;nope.style.opacity=0}
+  }
+  function onEnd(e){
+    if(!dragging)return;dragging=false;
+    const p=e.changedTouches?e.changedTouches[0]:e;
+    const dx=p.clientX-startX;
+    card.style.transition='transform 0.3s ease,opacity 0.3s ease';
+    card.querySelectorAll('.feedback').forEach(o=>o.style.opacity=0);
+    if(Math.abs(dx)>90){
+      const dir=dx>0?1:-1;
+      if(dir>0)addSaved(idea);
+      card.style.transform=`translate(${dir*600}px,40px) rotate(${dir*30}deg)`;
+      card.style.opacity='0';
+      setTimeout(()=>{card.remove();current--;restack();updateCounter();if(current<0)showDeckEmpty()},300);
+    }else{card.style.transform='translateY(0) rotate(0deg)'}
+  }
+  card.addEventListener('mousedown',onStart);
+  card.addEventListener('touchstart',onStart,{passive:true});
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('touchmove',onMove,{passive:false});
+  document.addEventListener('mouseup',onEnd);
+  document.addEventListener('touchend',onEnd);
+}
+
+function restack(){
+  const cards=document.querySelectorAll('#scene .card-el');
+  cards.forEach((c,i)=>{
+    const f=cards.length-1-i;
+    c.style.transition='transform 0.3s ease';
+    c.style.transform=`translateY(${f*8}px) rotate(${f*1.5}deg) scale(${1-f*0.03})`;
+    c.style.zIndex=i+1;
+  });
+}
+
+function updateCounter(){
+  document.getElementById('counter').textContent=current<0?'All reviewed':`${current+1} of ${IDEAS.length}`;
+}
+
+function showDeckEmpty(){
+  document.getElementById('deck-empty').style.display='flex';
+}
+
+function addSaved(idea){
+  saved.push(idea);
+  document.getElementById('saved-empty').style.display='none';
+  document.getElementById('saved-count').textContent=`${saved.length} saved`;
+  const pal=PALETTES[saved.length%PALETTES.length];
+  const card=document.createElement('div');
+  card.className='saved-card rounded-xl border border-white/10 overflow-hidden';
+  card.style.background=pal.bg;
+  card.onclick=()=>openModal(idea);
+  card.innerHTML=`
+    <div style="background:linear-gradient(135deg,${pal.accent}15 0%,transparent 100%);padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <span style="background:rgba(255,255,255,0.12);border-radius:99px;padding:3px 10px;font-size:10px;color:rgba(255,255,255,0.65);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${idea.potential_client}</span>
+        ${idea.is_local?`<span style="font-size:10px;color:#5DCAA5">📍 Local</span>`:`<span style="font-size:10px;color:#85B7EB">🌐 Remote</span>`}
+      </div>
+      <p style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#fff;margin-bottom:4px;line-height:1.2">${idea.name}</p>
+      <p style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.4;margin-bottom:10px">${idea.description.slice(0,60)}...</p>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;color:rgba(255,255,255,0.2)">${idea.is_local&&idea.local_businesses?`${idea.local_businesses.length} nearby`:'Remote target'}</span>
+        <i class="ti ti-arrow-right" style="font-size:13px;color:rgba(255,255,255,0.2)"></i>
+      </div>
+    </div>`;
+  document.getElementById('saved-grid').appendChild(card);
+}
+
+function openModal(idea){
+  document.getElementById('modal-name').textContent=idea.name;
+  document.getElementById('modal-client').textContent=idea.potential_client;
+  document.getElementById('modal-desc').textContent=idea.description;
+  document.getElementById('modal-badge').innerHTML=idea.is_local
+    ?`<span style="background:rgba(29,158,117,0.2);border:1px solid rgba(29,158,117,0.4);border-radius:99px;padding:5px 14px;font-size:12px;color:#5DCAA5;display:inline-flex;align-items:center;gap:5px">📍 Local opportunity</span>`
+    :`<span style="background:rgba(55,138,221,0.15);border:1px solid rgba(55,138,221,0.35);border-radius:99px;padding:5px 14px;font-size:12px;color:#85B7EB;display:inline-flex;align-items:center;gap:5px">🌐 Remote / scale target</span>`;
+
+  const bizEl=document.getElementById('modal-biz');
+  if(idea.is_local && idea.local_businesses && idea.local_businesses.length > 0){
+    bizEl.innerHTML=`
+      <p style="font-size:11px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Local businesses nearby</p>
+      <div style="display:flex;flex-wrap:wrap;gap:7px">
+        ${idea.local_businesses.map(b=>`
+          <a href="${b.url || '#'}" target="_blank" style="text-decoration:none">
+            <span style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:99px;padding:4px 12px;font-size:12px;color:rgba(255,255,255,0.6);cursor:pointer;display:block">${b.name || b}</span>
+          </a>`).join('')}
+      </div>`;
+}else{
+    bizEl.innerHTML=`<p style="font-size:13px;color:rgba(255,255,255,0.25)">This idea targets larger or remote markets.</p>`;
+  }
+  document.getElementById('modal').classList.remove('hidden');
+}
+
+function closeModal(e){
+  if(e.target===document.getElementById('modal'))document.getElementById('modal').classList.add('hidden');
+}
+
+function backToForm(){
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=false;
+  btn.textContent='Generate ideas';
+  showScreen('form-screen');
+}
+</script>
+</body>
+</html>
