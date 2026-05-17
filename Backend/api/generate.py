@@ -30,21 +30,3 @@ async def generate_projct(data: IdeaInput):
         "Data": response
     }
  
-@router.get("/get_business")
-async def get_business():
-    try:
-        z = await scrape.get_business("gym")
-        print(z)
-        return {
-            "Status" : "True"
-        }
-    except Exception:
-        return {
-            "Status" : "Failed"
-        }
-
-@router.post("/validate")
-async def validate_idea():
-    return {
-        "Status" : "Validated"
-    }
